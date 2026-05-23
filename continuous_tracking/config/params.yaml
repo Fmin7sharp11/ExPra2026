@@ -3,7 +3,7 @@ tracker_type: mouse  # "eyelink" or "mouse"
 
 num_repetitions_training: 2
 trial_duration_training: 5
-randomization_training: sequential  # "random", "sequential", "or "fullRandom"
+randomization_training: block  # "random", "sequential", "block" "or "fullRandom"
 conditions_training:
   - target_width: 0.1
     cursor_width: 0.0
@@ -16,7 +16,7 @@ conditions_training:
 
 num_repetitions: 10
 trial_duration: 20
-randomization: sequential  # "random", "sequential", or "fullRandom"
+randomization: block  # "random", "sequential","block" or "fullRandom"
 calibration_trials: [0]
 conditions:
   - target_width: 0.15
