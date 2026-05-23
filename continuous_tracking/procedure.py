@@ -57,6 +57,7 @@ def run_experiment(
             target_width=trial["target_width"],
             cursor_width=trial["cursor_width"],
             fps=params["monitor_fps"],
+            trial_duration=params["trial_duration_training"],
             training=True,
             ioh=ioh,
         )
@@ -76,6 +77,8 @@ def run_experiment(
             target_width=trial["target_width"],
             cursor_width=trial["cursor_width"],
             fps=params["monitor_fps"],
+            trial_duration=params["trial_duration"],
+            training=False,
             ioh=ioh,
             trial_number_offset=trial_handler_training.nTotal,
         )
