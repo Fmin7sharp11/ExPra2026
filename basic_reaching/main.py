@@ -17,8 +17,10 @@ import ctypes
 
 
 def main():
-  xlib = ctypes.cdll.LoadLibrary("libX11.so")
-  xlib.XInitThreads()
+  import platform
+  if platform.system() == "Linux":
+      xlib = ctypes.cdll.LoadLibrary("libX11.so")
+      xlib.XInitThreads()
   # Switch to the script folder
   script_path = os.path.dirname(sys.argv[0])
   if len(script_path) != 0:
@@ -51,6 +53,7 @@ def main():
   allowed_char = ascii_letters + digits + '_'
   dlg = gui.Dlg(title = "Introduce participant's ID")
   dlg.addField('Participant ID', required = True)
+  dlg.addField('Tracker Mode', choices=["Labor (EyeLink)", "Laptop (Dummy)"])
   ok_data = dlg.show()
   if dlg.OK:
       if ok_data[0].strip() == '':
@@ -65,6 +68,11 @@ def main():
       elif len(ok_data[0].rstrip().split(".")[0]) > 8:
         print('ERROR: EDF filename should not exceed 8 characters')
       participantID = ok_data[0]
+      #Auslesen des Feldes ob Dummy mode aktiviert wurde.
+      if ok_data[1] == "Laptop (Dummy)":
+          params.DUMMY_MODE = True
+      else:
+          params.DUMMY_MODE = False
   else:
       quit()
 
