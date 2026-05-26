@@ -25,6 +25,7 @@ def start():
     dlg.addField("Gender", choices=["male", "female", "diverse"])
     dlg.addField("Visual aids", choices=["none", "glasses", "contact lenses"])
     dlg.addField("Ocular dominance", choices=["right", "left"])
+    dlg.addField("Tracker Mode", choices=["Labor (eyelink)", "Laptop (mouse)"])
     dlg_data = dlg.show()
 
     if dlg.OK:
@@ -40,16 +41,26 @@ def start():
         }
 
         # Save participant information
-        folder_path = Path(".") / "continuous_tracking" / "data" / "out" / code
+        #folder_path = Path(".") / "continuous_tracking" / "data" / "out" / code
+        folder_path = Path(__file__).parent / "data" / "out" / code
         os.makedirs(folder_path, exist_ok=True)
         info_path = folder_path / f"info-{session}.json"
         with open(info_path, "a") as file:
             json.dump(participant_info, file, indent=4)
 
         # Load params
-        params_path = Path(".") / "continuous_tracking" / "config" / "params.yaml"
+        #params_path = Path(".") / "continuous_tracking" / "config" / "params.yaml"
+        params_path = Path(__file__).parent / "config" / "params.yaml"
         with open(params_path) as params_file:
             params = yaml.safe_load(params_file)
+        # Den ausgewählten Tracker-Modus aus dem Dialog abfangen (Index 6 ist das 7. Feld)
+        tracker_mode = dlg_data[6]
+        
+        # Den Wert aus der yaml-Datei im Arbeitsspeicher überschreiben
+        if tracker_mode == "Laptop (mouse)":
+            params["tracker_type"] = "mouse"
+        else:
+            params["tracker_type"] = "eyelink"
 
         # Save copy of params
         params_copy_path = folder_path / f"params-{session}.yaml"

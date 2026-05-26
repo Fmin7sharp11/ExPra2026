@@ -130,7 +130,7 @@ class ReachingExperiment:
 
     return pylink.TRIAL_ERROR
 
-  def _update(self, trial_nr, mouse_pos, target_pos, global_timer, block):
+  def _update(self, trial_nr, mouse_pos, target_pos, global_timer, block, gaze_x, gaze_y):
     '''
     Create new csv file if needed and add new row of data
     '''
@@ -145,7 +145,7 @@ class ReachingExperiment:
       writer = csv.writer(f)
       #write first line of csv file if not written yet
       if not file_exists:
-        writer.writerow(["trial", "time", "cursor_x_pix", "cursor_y_pix", "cursor_x_cm", "cursor_y_cm", "target_x", "target_y"])
+        writer.writerow(["trial", "time", "cursor_x_pix", "cursor_y_pix", "gaze_x","gaze_y", "cursor_x_cm", "cursor_y_cm", "target_x", "target_y"])
       # add row of data
       writer.writerow([
         trial_nr,
@@ -154,6 +154,8 @@ class ReachingExperiment:
         mouse_pos[1],
         mouse_x_cm,
         mouse_y_cm,
+        gaze_x,
+        gaze_y,
         target_pos[0],
         target_pos[1]
       ])
@@ -197,9 +199,36 @@ class ReachingExperiment:
       
       # get position of mouse and set cursor position to the one of the mouse    
       mouse_pos = mouse.getPos()
+      #Eyetracker Abfragen
+      if pm.DUMMY_MODE:
+        # Im Dummy-Modus sind Maus und Gaze identisch (Mitte = 0,0)
+        gaze_x, gaze_y = mouse_pos[0], mouse_pos[1]
+      else:
+        # Im Labor: Hole das aktuellste Roh-Sample vom EyeLink-Tracker
+        sample = self.el_tracker.getNewestSample()
+        
+        if sample is not None:
+          # Koordinaten in Roh-Pixeln (Ursprung: Oben Links) auslesen
+          if sample.isLeftSample():
+            raw_x, raw_y = sample.getLeftEye().getGaze()
+          elif sample.isRightSample():
+            raw_x, raw_y = sample.getRightEye().getGaze()
+          else:
+            raw_x, raw_y = None, None
+          
+          # Umrechnung in das PsychoPy-Koordinatensystem (Ursprung: Mitte)
+          if raw_x is not None and raw_y is not None:
+            gaze_x = raw_x - (self.scn_width / 2.0)
+            gaze_y = (self.scn_height / 2.0) - raw_y
+          else:
+            gaze_x, gaze_y = -999, -999
+            
+        else:
+          gaze_x, gaze_y = -999, -999
+
       cursor.setPos(mouse_pos)
       # Save data in csv file
-      self._update(trial_nr, mouse_pos, chosen_target.pos, global_timer, block)
+      self._update(trial_nr, mouse_pos, chosen_target.pos, global_timer, block, gaze_x, gaze_y)
       if state == "start":
         # Draw start point
         start_point.draw()

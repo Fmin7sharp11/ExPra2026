@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
 import _csv
-from psychopy import clock, event, visual
+from psychopy import clock, event, visual, core
 from psychopy.iohub.constants import EyeTrackerConstants
 
 from continuous_tracking.random_walker import RandomWalker
@@ -123,6 +123,18 @@ class TrackingTask:
             self.cursor.draw()
 
             self.window.flip()
+            # --- NEU: Tastaturabfrage für Notausgang und Bypass ---
+            keys = event.getKeys()
+            
+            # 1. Notausgang: Wenn Escape gedrückt wird, sofort beenden
+            if 'escape' in keys:
+                self.window.close()
+                core.quit()
+                
+            # 2. Bypass: Weiter, wenn Leertaste gedrückt ODER Kreis geklickt wird
+            if 'space' in keys or self.mouse.isPressedIn(fixation_circle, buttons=[1]):
+                break
+            # -------------------------------------------------------
 
             if self.mouse.isPressedIn(fixation_circle, buttons=[1]):
                 break
