@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 import _csv
 from psychopy import clock, event, visual, core
 from psychopy.iohub.constants import EyeTrackerConstants
+import pylink
 
 from continuous_tracking.random_walker import RandomWalker
 from continuous_tracking.stimulus import DotStimulus, make_gaussian_blob
@@ -20,7 +21,8 @@ class TrackingTask:
         fps: int = 60,
         trial_duration: int = 20,
         training: bool = False,
-        ioh: Optional["iohub.client.ioHubConnection"] = None,
+        el_tracker: Any = None,
+        dummy_mode: bool = False,
         trial_number_offset: int = 0,
         random_walk_kwargs: Dict[str, Any] = {},
     ) -> None:
@@ -39,8 +41,7 @@ class TrackingTask:
             fps (int, optional): Frames per second of the monitor. Defaults to 60.
             trial_duration (int, optional): How many seconds a trial lasts. Defaults to 20.
             training (bool, optional): Whether this trial is a training trial. Defaults to False.
-            ioh (Optional[ioHubConnection], optional): Eye tracker interface via iohub. Defaults
-            to None.
+            el_tracker: suports connection to Eyetracker
             trial_number_offset (int, optional): Number to add to the trial number when saving to
             CSV (but does not mess with the progress bar). Defaults to 0.
             random_walk_kwargs (Dict[str, Any], optional): Arguments to pass to the `RandomWalker`.
@@ -55,11 +56,10 @@ class TrackingTask:
         self.fps = fps
         self.trial_duration = trial_duration
         self.training = training
-        self.ioh = ioh
+        self.el_tracker = el_tracker
+        self.dummy_mode = dummy_mode
         self.trial_number_offset = trial_number_offset
         self.random_walk_kwargs = random_walk_kwargs
-
-        self.tracker = self.ioh.getDevice("tracker")
 
     def run(self) -> None:
         """
@@ -151,11 +151,11 @@ class TrackingTask:
         actual_trial_number = self.trial_number + self.trial_number_offset
         num_frames = round(self.fps * self.trial_duration)
 
-        self.ioh.clearEvents()
-        self.tracker.sendMessage(f"TRIAL_START: {actual_trial_number}")
+        self.el_tracker.sendMessage(f"TRIAL_START: {actual_trial_number}")
         if not self.training:
-            # Only record during real trials
-            self.tracker.setRecordingState(True)
+            self.el_tracker.setOfflineMode()
+            self.el_tracker.startRecording(1, 1, 1, 1)
+            pylink.pumpDelay(100)
 
         # Set up the timing
         timer = clock.Clock()
@@ -168,11 +168,30 @@ class TrackingTask:
             target_pos = random_walker.pos
             target_vel = random_walker.vel
             mouse_pos = self.mouse.getPos()
-
-            gaze_pos = self.tracker.getLastGazePosition()
-            if gaze_pos is None or gaze_pos == EyeTrackerConstants.FUNCTIONALITY_NOT_SUPPORTED:
-                # Make it a tuple for saving
-                gaze_pos = None, None
+#---------------------Eingefügt für Eyetracking
+            if self.dummy_mode:
+                gaze_x, gaze_y = mouse_pos[0], mouse_pos[1]
+                trk_time = -1
+            else:
+                sample = self.el_tracker.getNewestSample()
+                if sample is not None:
+                    if sample.isLeftSample():
+                        raw_x, raw_y = sample.getLeftEye().getGaze()
+                    elif sample.isRightSample():
+                        raw_x, raw_y = sample.getRightEye().getGaze()
+                    else:
+                        raw_x, raw_y = None, None
+                    
+                    if raw_x is not None and raw_y is not None:
+                        gaze_x = raw_x - (self.window.size[0] / 2.0)
+                        gaze_y = (self.window.size[1] / 2.0) - raw_y
+                    else:
+                        gaze_x, gaze_y = -999, -999
+                    
+                    trk_time = sample.getTime()
+                else:
+                    gaze_x, gaze_y = -999, -999
+                    trk_time = -1
 
             self.data.append(
                 [
@@ -187,9 +206,9 @@ class TrackingTask:
                     frame_start,
                     actual_trial_number,
                     self.training,
-                    gaze_pos[0],
-                    gaze_pos[1],
-                    self.tracker.trackerTime(),
+                    gaze_x,
+                    gaze_y,
+                    trk_time
                 ]
             )
 
@@ -210,8 +229,10 @@ class TrackingTask:
             # Make one step (per frame)
             random_walker.walk()
 
-        self.tracker.setRecordingState(False)
-        self.tracker.sendMessage(f"TRIAL_END: {actual_trial_number}")
+        if not self.training:
+            self.el_tracker.stopRecording()
+            
+        self.el_tracker.sendMessage(f"TRIAL_END: {actual_trial_number}")
 
         # Save data
         self.csv_writer.writerows(self.data)

@@ -25,7 +25,7 @@ def start():
     dlg.addField("Gender", choices=["male", "female", "diverse"])
     dlg.addField("Visual aids", choices=["none", "glasses", "contact lenses"])
     dlg.addField("Ocular dominance", choices=["right", "left"])
-    dlg.addField("Tracker Mode", choices=["Labor (eyelink)", "Laptop (mouse)"])
+    dlg.addField("Tracker Mode", choices=["Labor (eyelink)", "Laptop (dummy)"])
     dlg_data = dlg.show()
 
     if dlg.OK:
