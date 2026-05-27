@@ -28,8 +28,11 @@ FEEDBACK_TEXT_TIMEOUT = "Time out"
 ###############################################
 ################### STIMULI ###################
 ###############################################
-TARGETS_X_POS = [-730, -632, -365, 0, 365, 632, 730] #pix
-TARGETS_Y_POS = [-370, -5, 262, 360, 262, -5, -370] #pix
+# TARGETS_X_POS = [-730, -632, -365, 0, 365, 632, 730] #pix
+# TARGETS_Y_POS = [-370, -5, 262, 360, 262, -5, -370] #pix
+TARGETS_RANGE = 1/3 # part of the circle the targets are drawn from
+TARGETS_DISTANCE = 100# distance from start point
+TARGET_WIDTH_PER_BLOCK = [0.15,0.3,0.45,0.6]
 CIRCLE_COLOR = 'white'
 FEEDBACK_TIME = 2 # sec
 FEEDBACK_POS = (0, 0)
@@ -40,7 +43,8 @@ FEEBACK_TIMEOUT_COLOR = [1.0,-1,-1]
 ###############################################
 ################### TRIALS ####################
 ###############################################
-START_TRIAL = 0.5 # seconds
+START_TRIAL_LOW = 0.5 # seconds
+STRAT_TRIAL_HIGH = 1.5 # seconds 
 END_TRIAL = 0.2 # seconds
 TIMEOUT = 4 # seconds
 MOUSE_VISIBLE = False
@@ -49,5 +53,5 @@ CURSOR_RADIUS = 7 #pix
 STARTING_POINT_COLOR = '#023020'
 STARTING_POINT_POS = [0, -360] #pix
 STARTING_POINT_RADIUS = 15 #pix
-BLOCKS = 2
-TRIALS_PER_BLOCK = [3, 3]
+BLOCKS = 4
+TRIALS_PER_BLOCK = [30, 30, 30, 30]

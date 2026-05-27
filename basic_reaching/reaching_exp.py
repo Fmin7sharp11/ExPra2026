@@ -237,17 +237,19 @@ class ReachingExperiment:
         # Check if mouse is in start point
         if ds.is_mouse_in_object(mouse_pos, start_point.pos, start_point.radius):
           self.el_tracker.sendMessage('CURSOR_IN_START_POINT')
-          # Start timer to start reaching task
-          if change_state_timer is None:
-            change_state_timer = core.Clock()
-          # Check if mouse is in start point long enough and change state to "targets"
-          elif change_state_timer.getTime() >= pm.START_TRIAL:
-            state = "targets"
-            self.el_tracker.sendMessage('START_POINT_END')
-            cursor.draw()
+          if mouse.isPressedIn():
+            if change_state_timer is None:
+              change_state_timer = core.Clock()
+            # Check if mouse is in start point long enough and change state to "targets"
+            if change_state_timer.getTime() >=  np.random.uniform(low=pm.START_TRIAL_LOW,high=pm.START_TRIAL_HIGH):
+              state = "targets"
+              self.el_tracker.sendMessage('START_POINT_END')
+              cursor.draw()
             # Start timer for maximum duration of reaching task
-            trial_duration_timer = core.Clock()
-            change_state_timer = None
+              trial_duration_timer = core.Clock()
+              change_state_timer = None
+          
+
       elif state == "targets" and chosen_target:
         # Draw target
         chosen_target.draw()
@@ -303,7 +305,7 @@ class ReachingExperiment:
   def _run_block(self, block, targets, global_timer):
     mouse = ds.create_mouse(win=self.win)
     cursor = ds.create_cursor(win=self.win)
-    targets = ds.create_targets(self.win)
+    targets = ds.create_targets_random(self.win,pm.TRIALS_PER_BLOCK[block],pm.TARGET_WIDTH_PER_BLOCK[block])
     
     for trial in range(pm.TRIALS_PER_BLOCK[block]):
       start_point = ds.create_starting_point(self.win)
@@ -342,7 +344,7 @@ class ReachingExperiment:
     self.calibrate(self.win)
     global_timer = core.Clock()
     for block in range(pm.BLOCKS):
-      targets = ds.create_targets(self.win)
+      targets = ds.create_targets_random(self.win, pm.TRIALS_PER_BLOCK[block],pm.TARGET_WIDTH_PER_BLOCK[block])
       block_msg = f"Block {block + 1}\n Press the Home Button to continue."
       self.show_msg(self.win, block_msg)
       self._run_block(block=block, targets=targets, global_timer=global_timer)
