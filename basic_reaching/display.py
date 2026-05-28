@@ -7,7 +7,7 @@ import random
 import numpy as np
 from PIL import Image
 import math
-from continuous_tracking import stimulus
+import stimulus
 
 def initialize_window():
     # initialize PsychoPy window
@@ -69,7 +69,7 @@ def create_targets_random(win,num_targets,blob_width):
     
     # 1. Define the angle constraints based on parameters
     # pm.TARGET_RANGE is the fraction (e.g., 1/3), convert to radians
-    arc_span = pm.TARGET_RANGE * (2 * math.pi) 
+    arc_span = pm.TARGETS_RANGE * (2 * math.pi) 
     
     # Center the arc straight ahead (90 degrees or pi/2 radians)
     center_angle = math.pi / 2  
@@ -82,11 +82,12 @@ def create_targets_random(win,num_targets,blob_width):
         random_angle = random.uniform(min_angle, max_angle)
         
         # Calculate coordinates using the fixed distance
-        x = pm.STARTING_POINT_POS + pm.TARGET_DISTANCE * math.cos(random_angle)
-        y = pm.STARTING_POINT_POS + pm.TARGET_DISTANCE * math.sin(random_angle)
+        x = pm.STARTING_POINT_POS[0] + pm.TARGETS_DISTANCE * math.cos(random_angle)
+        y = pm.STARTING_POINT_POS[1] + pm.TARGETS_DISTANCE * math.sin(random_angle)
         
         # Create the random blob target
-        target = make_gaussian_blob(win, blob_width)
+        target = stimulus.make_gaussian_blob(win, 8)
+        target.pos = [x,y]
         targets.append(target)
         
     return targets
