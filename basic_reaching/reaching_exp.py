@@ -311,7 +311,7 @@ class ReachingExperiment:
       start_point = ds.create_starting_point(self.win)
       chosen_target = ds.choose_target(targets)
       
-      radius = chosen_target.radius
+      radius = chosen_target.size * (2/3) #
       
       # put the tracker in the offline mode first
       self.el_tracker.setOfflineMode()

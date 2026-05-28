@@ -45,11 +45,11 @@ FEEBACK_TIMEOUT_COLOR = [1.0,-1,-1]
 ###############################################
 START_TRIAL_LOW = 0.5 # seconds
 STRAT_TRIAL_HIGH = 1.5 # seconds 
-END_TRIAL = 0.2 # seconds
+END_TRIAL = 0.45 # seconds
 TIMEOUT = 4 # seconds
 MOUSE_VISIBLE = False
 CURSOR_COLOR = 'black'
-CURSOR_RADIUS = 7 #pix
+CURSOR_RADIUS = 0.0 #pix
 STARTING_POINT_COLOR = '#023020'
 STARTING_POINT_POS = [0, -360] #pix
 STARTING_POINT_RADIUS = 15 #pix
