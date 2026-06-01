@@ -26,7 +26,7 @@ def run_experiment(
     window = create_window()
     check_window_fps(window)
     #---------------------Neue eingefügt, damit verbindung/ tracking basic reaching entspricht -------------
-    dummy_mode = params["tracker_type"] == "mouse"
+    dummy_mode = params["tracker_type"] == "dummy"
 
     if dummy_mode:
         el_tracker = pylink.EyeLink(None)

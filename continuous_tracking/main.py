@@ -55,10 +55,10 @@ def start():
             params = yaml.safe_load(params_file)
         # Den ausgewählten Tracker-Modus aus dem Dialog abfangen (Index 6 ist das 7. Feld)
         tracker_mode = dlg_data[6]
-        
+        print("TEXT AUS DEM FENSTER:", tracker_mode)
         # Den Wert aus der yaml-Datei im Arbeitsspeicher überschreiben
-        if tracker_mode == "Laptop (mouse)":
-            params["tracker_type"] = "mouse"
+        if tracker_mode == "Laptop (dummy)":
+            params["tracker_type"] = "dummy"
         else:
             params["tracker_type"] = "eyelink"
 
