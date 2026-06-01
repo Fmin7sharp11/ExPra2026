@@ -36,7 +36,7 @@ def run_experiment(
     edf_name = f"P{participant_info['code']}.EDF"[:8]
     el_tracker.openDataFile(edf_name)
     el_tracker.setOfflineMode()
-    
+    el_tracker.startRecording(1, 1, 1, 1)
     scn_width, scn_height = window.size
     el_tracker.sendCommand("screen_pixel_coords = 0 0 %d %d" % (scn_width - 1, scn_height - 1))
     el_tracker.sendMessage("DISPLAY_COORDS  0 0 %d %d" % (scn_width - 1, scn_height - 1))
@@ -142,3 +142,5 @@ def run_experiment(
             trial_number_offset=trial_handler_training.nTotal,
         )
         task.run()
+    el_tracker.stopRecording()
+    el_tracker.closeDataFile()
