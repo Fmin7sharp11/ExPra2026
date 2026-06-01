@@ -237,23 +237,26 @@ class ReachingExperiment:
         # Check if mouse is in start point
         if ds.is_mouse_in_object(mouse_pos, start_point.pos, start_point.radius):
           self.el_tracker.sendMessage('CURSOR_IN_START_POINT')
-          if mouse.isPressedIn():
-            if change_state_timer is None:
-              change_state_timer = core.Clock()
+          if mouse.isPressedIn(start_point):
+            change_state_timer = core.Clock()
+            start_time = np.random.uniform(low=pm.START_TRIAL_LOW,high=pm.START_TRIAL_HIGH)
+            state = "hold"  # Wechsel in den Halte-Zustand
             # Check if mouse is in start point long enough and change state to "targets"
-            if change_state_timer.getTime() >=  np.random.uniform(low=pm.START_TRIAL_LOW,high=pm.START_TRIAL_HIGH):
-              state = "targets"
-              self.el_tracker.sendMessage('START_POINT_END')
-              cursor.draw()
-            # Start timer for maximum duration of reaching task
-              trial_duration_timer = core.Clock()
-              change_state_timer = None
+      if state == "hold":
+        if change_state_timer.getTime() >= start_time:
+          state = "targets"
+          self.el_tracker.sendMessage('START_POINT_END')
+          # Start timer for maximum duration of reaching task
+          trial_duration_timer = core.Clock()
+          change_state_timer = None
+        start_point.draw()
+        cursor.draw()
           
 
       elif state == "targets" and chosen_target:
         # Draw target
-        chosen_target.draw()
         cursor.draw()
+        chosen_target.draw()
         self.el_tracker.sendMessage('TARGET_END')
         time_out = pm.TIMEOUT
         
@@ -267,7 +270,13 @@ class ReachingExperiment:
           trial_done = True
           trial_duration_timer = None
         # Check if mouse is in target
-        if ds.is_mouse_in_object(mouse_pos, chosen_target.pos, radius):
+        # Convert to numpy arrays first to safely flatten, then cast to pure Python float lists
+        flat_mouse = [float(x) for x in np.asarray(mouse_pos).ravel()]
+        flat_target = [float(x) for x in np.asarray(chosen_target.pos).ravel()]
+        scalar_radius = float(np.asarray(radius).ravel()[0])
+# Now it is completely safe to pass to your custom function
+        if ds.is_mouse_in_object(flat_mouse, flat_target, scalar_radius):
+        #if ds.is_mouse_in_object(list(mouse_pos), list(chosen_target.pos), radius):
           self.el_tracker.sendMessage('CURSOR_IN_TARGET')
           # Start timer
           if change_state_timer is None:

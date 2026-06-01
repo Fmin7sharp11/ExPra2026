@@ -1,0 +1,11 @@
+[project]
+name = "picture"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.10.12"
+dependencies = [
+    "numpy>=2.2.6",
+    "psychopy==2025.1.1",
+    "wxpython==4.2.5",
+]
