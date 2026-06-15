@@ -6,6 +6,8 @@ from psychopy import visual, core, event, gui
 import pylink
 import platform
 import params
+import shutil
+import yaml
 import display as ds
 import random
 import sys
@@ -83,6 +85,10 @@ def main():
   participant_folder = os.path.dirname(__file__)+"/data/"+ participantID
   os.makedirs(participant_folder, exist_ok=True)
   win = ds.initialize_window()
+
+  # Save copy of params
+  params_copy_path = participant_folder +"/fparams_copy.py"
+  shutil.copy("params.py", params_copy_path)
 
   # Experiment 1: Blob Stim, Fixed Sizes, Change of Opacity
   exp = re.ReachingExperiment(

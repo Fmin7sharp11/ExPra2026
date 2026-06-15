@@ -17,7 +17,8 @@ conditions_training:
 num_repetitions: 10
 trial_duration: 20
 randomization: block  # "random", "sequential","block" or "fullRandom"
-calibration_trials: [0]
+#von mir leer gemacht um auszuschließen, dass erneutes calibrieren zu deadlock führt
+calibration_trials: []
 conditions:
   - target_width: 0.15
     cursor_width: 0.0

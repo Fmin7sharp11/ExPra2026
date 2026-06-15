@@ -10,10 +10,11 @@ UNITS = 'pix'
 TEXT_COLOR = 'white'
 BACKGROUND_SQUARES_SIZE = 2
 MEAN_LUM = 0.5
-SCREEN_WIDTH = 33#59.7 #cm
+SCREEN_WIDTH = 59.7 #cm
 SCREEN_HEIGHT = 33.7 #cm
 VIEW_DISTANCE = 70 # cm ???? check in continuous task
-RESOLUTION_X = 1920
+RESOLUTION_X = 2560
+RESOLUTION_Y = 1440
 
 ###############################################
 ################## TEXTBOXES ##################
@@ -34,7 +35,7 @@ FEEDBACK_TEXT_TIMEOUT = "Time out"
 # TARGETS_Y_POS = [-370, -5, 262, 360, 262, -5, -370] #pix
 TARGETS_RANGE = 1/3                    # pix
 TARGETS_DISTANCE = 600             # pix
-TARGET_WIDTH_PER_BLOCK = [0.15, 0.3, 0.45, 0.6] # Width in DEGREES
+TARGET_WIDTH_PER_BLOCK = [0.2, 0.3, 0.4, 0.5] # Width in DEGREES
 CIRCLE_COLOR = 'white'
 FEEDBACK_TIME = 2 # sec
 FEEDBACK_POS = (0, 0)
@@ -57,3 +58,5 @@ STARTING_POINT_POS = [0,-360] #pix
 STARTING_POINT_RADIUS = 15 #pix
 BLOCKS = 4
 TRIALS_PER_BLOCK = [30, 30, 30, 30]
+PRACTICE_TRIALS = 3
+PRACTICE_TARGET_WIDTH = 0.1

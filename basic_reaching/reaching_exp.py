@@ -123,14 +123,14 @@ class ReachingExperiment:
     self.clear_screen(win)
     # Send a message to clear the Data Viewer screen
     bgcolor_RGB = (116, 116, 116)
-    self.el_tracker.sendMessage('!V CLEAR %d %d %d' % bgcolor_RGB)
+    self.el_tracker.sendMessage('!V CLEAR %d %d %d ' % bgcolor_RGB)
 
     # send a message to mark trial end
-    self.el_tracker.sendMessage('TRIAL_RESULT %d' % pylink.TRIAL_ERROR)
+    self.el_tracker.sendMessage('TRIAL_RESULT %d ' % pylink.TRIAL_ERROR)
 
     return pylink.TRIAL_ERROR
 
-  def _update(self, trial_nr, mouse_pos, target_pos, global_timer, block, gaze_x, gaze_y):
+  def _update(self, trial_nr, mouse_pos, target_pos, global_timer, block, gaze_x, gaze_y, state_marker, button_pressed, start_time):
     '''
     Create new csv file if needed and add new row of data
     '''
@@ -145,70 +145,82 @@ class ReachingExperiment:
       writer = csv.writer(f)
       #write first line of csv file if not written yet
       if not file_exists:
-        writer.writerow(["trial", "time", "cursor_x_pix", "cursor_y_pix", "gaze_x","gaze_y", "cursor_x_cm", "cursor_y_cm", "target_x", "target_y"])
-      # add row of data
+        writer.writerow([
+        "trial",
+        "time",
+        "cursor_x_pix",
+        "cursor_y_pix",
+        "cursor_x_cm",
+        "cursor_y_cm",
+        "gaze_x",
+        "gaze_y",
+        "target_x",
+        "target_y",
+        "state_marker",
+        "button_pressed",
+        "start_time"
+        ])
+        # add row of data
       writer.writerow([
-        trial_nr,
-        global_timer.getTime(),
-        mouse_pos[0],
-        mouse_pos[1],
-        mouse_x_cm,
-        mouse_y_cm,
-        gaze_x,
-        gaze_y,
-        target_pos[0],
-        target_pos[1]
+      trial_nr,
+      global_timer.getTime(),
+      mouse_pos[0],
+      mouse_pos[1],
+      mouse_x_cm,
+      mouse_y_cm,
+      gaze_x,
+      gaze_y,
+      target_pos[0],
+      target_pos[1],
+      state_marker,
+      button_pressed,
+      start_time
       ])
 
   def _run_trial(self, block, global_timer, trial_nr, mouse, cursor, start_point, chosen_target, radius):
 
-    # clear the host screen before we draw the backdrop
-    self.el_tracker.sendCommand('clear_screen 0')
-    
-    self.el_tracker.sendMessage('TRIAL_ID %d' % trial_nr)
+    self.el_tracker.sendCommand('clear_screen 0 ')
+    self.el_tracker.sendMessage('TRIAL_ID %d ' % trial_nr)
     pylink.pumpDelay(100)
     
-    # record_status_message : show some info on the Host PC
-    # here we show how many trial has been tested
-    status_msg = 'TRIAL number %d' % trial_nr
-    self.el_tracker.sendCommand("record_status_message '%s'" % status_msg)
+    status_msg = 'TRIAL number %d ' % trial_nr
+    self.el_tracker.sendCommand("record_status_message '%s' " % status_msg)
     
-    #visual.ImageStim(self.win, image=f"images/fixTarget.bmp").draw()
     timer = core.Clock()
     keys = event.getKeys(keyList=['return'])
     
-    #self.win.flip()
     left = int(self.scn_width/2.0) - 60
     top = int(self.scn_height/2.0) - 60
     right = int(self.scn_width/2.0) + 60
     bottom = int(self.scn_height/2.0) + 60
     ia_pars = (1, left, top, right, bottom, 'screen_center')
-    self.el_tracker.sendMessage('!V IAREA RECTANGLE %d %d %d %d %d %s' % ia_pars)
+    self.el_tracker.sendMessage('!V IAREA RECTANGLE %d %d %d %d %d %s ' % ia_pars)
     
     trial_done = False
     
-    # Set beginning of trial
+    # Zustand initialisieren und die erste Nachricht genau einmal feuern
     state = "start"
+    self.el_tracker.sendMessage('START_POINT_ONSET ') 
     change_state_timer = None
     trial_duration_timer = None
     
+    # Flag für den Startpunkt/Target
+    mouse_in_start = False 
+    mouse_in_target = False
+    start_time = np.random.uniform(low=pm.START_TRIAL_LOW,high=pm.START_TRIAL_HIGH)
     while not trial_done:
       if 'escape' in event.getKeys():
         self.el_tracker.stopRecording()
         self.terminate_task(win=self.win, edf_file=self.edf_file, session_folder=self.data_dir, session_identifier=self.session_identifier)
       
-      # get position of mouse and set cursor position to the one of the mouse    
       mouse_pos = mouse.getPos()
-      #Eyetracker Abfragen
+      
+      # Eyetracker Abfragen
       if pm.DUMMY_MODE:
-        # Im Dummy-Modus sind Maus und Gaze identisch (Mitte = 0,0)
         gaze_x, gaze_y = mouse_pos[0], mouse_pos[1]
       else:
-        # Im Labor: Hole das aktuellste Roh-Sample vom EyeLink-Tracker
         sample = self.el_tracker.getNewestSample()
-        
         if sample is not None:
-          # Koordinaten in Roh-Pixeln (Ursprung: Oben Links) auslesen
           if sample.isLeftSample():
             raw_x, raw_y = sample.getLeftEye().getGaze()
           elif sample.isRightSample():
@@ -216,80 +228,110 @@ class ReachingExperiment:
           else:
             raw_x, raw_y = None, None
           
-          # Umrechnung in das PsychoPy-Koordinatensystem (Ursprung: Mitte)
           if raw_x is not None and raw_y is not None:
             gaze_x = raw_x - (self.scn_width / 2.0)
             gaze_y = (self.scn_height / 2.0) - raw_y
           else:
             gaze_x, gaze_y = -999, -999
-            
         else:
           gaze_x, gaze_y = -999, -999
 
       cursor.setPos(mouse_pos)
-      # Save data in csv file
-      self._update(trial_nr, mouse_pos, chosen_target.pos, global_timer, block, gaze_x, gaze_y)
+      
+      # --- Status-Marker für die CSV-Datei berechnen ---
+      flat_mouse = [float(x) for x in np.asarray(mouse_pos).ravel()]
+      flat_target = [float(x) for x in np.asarray(chosen_target.pos).ravel()]
+      scalar_radius = float(np.asarray(radius).ravel()[0])
+      
       if state == "start":
-        # Draw start point
+        if ds.is_mouse_in_object(mouse_pos, start_point.pos, start_point.radius):
+          state_marker = 1
+        else:
+          state_marker = 0
+      elif state == "hold":
+        state_marker = 1
+      elif state == "targets":
+        if ds.is_mouse_in_object(flat_mouse, flat_target, scalar_radius):
+          state_marker = 4
+        elif ds.is_mouse_in_object(mouse_pos, start_point.pos, start_point.radius):
+          state_marker = 2
+        else:
+          state_marker = 3
+      # mouse button pressed?
+      button_pressed = bool(mouse.getPressed()[0])# is left mouse button pressed
+      self._update(trial_nr, mouse_pos, chosen_target.pos, global_timer, block, gaze_x, gaze_y, state_marker, button_pressed, start_time)
+      
+      if state == "start":
         start_point.draw()
         cursor.draw()
-        self.el_tracker.sendMessage('START_POINT_ONSET')
-        # Check if mouse is in start point
+        
         if ds.is_mouse_in_object(mouse_pos, start_point.pos, start_point.radius):
-          self.el_tracker.sendMessage('CURSOR_IN_START_POINT')
-          if mouse.isPressedIn(start_point):
+          if not mouse_in_start:
+            self.el_tracker.sendMessage('CURSOR_IN_START_POINT ')
+            mouse_in_start = True
+            
+          if mouse.isPressedIn(start_point,buttons=[0]):
+            self.el_tracker.sendMessage('BUTTON_PRESSED_IN_START_POINT')
             change_state_timer = core.Clock()
-            start_time = np.random.uniform(low=pm.START_TRIAL_LOW,high=pm.START_TRIAL_HIGH)
-            state = "hold"  # Wechsel in den Halte-Zustand
-            # Check if mouse is in start point long enough and change state to "targets"
-      if state == "hold":
+            state = "hold"
+        else:
+          mouse_in_start = False
+
+      elif state == "hold":
         if change_state_timer.getTime() >= start_time:
           state = "targets"
-          self.el_tracker.sendMessage('START_POINT_END')
-          # Start timer for maximum duration of reaching task
+          self.el_tracker.sendMessage('START_POINT_END ')
+          self.el_tracker.sendMessage('TARGET_ONSET ')
           trial_duration_timer = core.Clock()
           change_state_timer = None
         start_point.draw()
         cursor.draw()
-          
 
       elif state == "targets" and chosen_target:
-        # Draw target
-        cursor.draw()
         chosen_target.draw()
-        self.el_tracker.sendMessage('TARGET_END')
+        cursor.draw()
+        
+
         time_out = pm.TIMEOUT
         
-        # End trial if it takes too much time
         if trial_duration_timer.getTime() >= time_out:
           ds.blank_screen(self.win)
           ds.target_not_reached(self.win)
           ds.blank_screen(self.win)
-          self.el_tracker.sendMessage('TIME_OUT')
+          self.el_tracker.sendMessage('TIME_OUT ')
           state = "start"
+          self.el_tracker.sendMessage('START_POINT_ONSET ')
           trial_done = True
           trial_duration_timer = None
-        # Check if mouse is in target
-        # Convert to numpy arrays first to safely flatten, then cast to pure Python float lists
-        flat_mouse = [float(x) for x in np.asarray(mouse_pos).ravel()]
-        flat_target = [float(x) for x in np.asarray(chosen_target.pos).ravel()]
-        scalar_radius = float(np.asarray(radius).ravel()[0])
-# Now it is completely safe to pass to your custom function
+
         if ds.is_mouse_in_object(flat_mouse, flat_target, scalar_radius):
-        #if ds.is_mouse_in_object(list(mouse_pos), list(chosen_target.pos), radius):
-          self.el_tracker.sendMessage('CURSOR_IN_TARGET')
-          # Start timer
+
+          # update target flag
+          if not mouse_in_target:
+            self.el_tracker.sendMessage('CURSOR_IN_TARGET ')
+            mouse_in_target = True
+
+          # initialise timer
           if change_state_timer is None:
             change_state_timer = core.Clock()
-          # Check if mouse is in target long enough, end trial and change state to "targets"
-          elif change_state_timer.getTime() >= pm.END_TRIAL:
-            ds.blank_screen(self.win)
-            ds.target_reached(self.win)
-            ds.blank_screen(self.win)
-            self.el_tracker.sendMessage('TRIAL_END')
-            state = "start"
-            trial_done = True
-            change_state_timer = None
+
+          # target timer
+          if change_state_timer.getTime() >= pm.END_TRIAL:
+              self.el_tracker.sendMessage('TARGET_END ')
+              ds.blank_screen(self.win)
+              ds.target_reached(self.win)
+              ds.blank_screen(self.win)
+              self.el_tracker.sendMessage('TRIAL_END ')
+              state = "start"
+              trial_done = True
+              change_state_timer = None
+
+          else:
+            # left target when in already
+            if mouse_in_target:
+              self.el_tracker.sendMessage('CURSOR_LEFT_TARGET ')
+              mouse_in_target = False
+
       
       self.win.flip()
 
@@ -298,25 +340,29 @@ class ReachingExperiment:
         self.terminate_task(win=self.win, edf_file=self.edf_file, session_folder=self.data_dir, session_identifier=self.session_identifier)
         return
 
-      self.el_tracker.sendMessage("STIM_END")
-      # 4️⃣ Kurze Pause, damit nichts „flackert“ und der nächste Trial sauber startet
-      #core.wait(0.5)
-      # stop recording; add 500 msec to catch final events before stopping
-      #pylink.pumpDelay(500)
-      self.el_tracker.stopRecording()
+    # Die Einrückung wurde hier aufgehoben. Diese Zeilen laufen erst nach trial_done.
+    self.el_tracker.sendMessage("STIM_END ")
+    self.el_tracker.stopRecording()
+    self.el_tracker.sendMessage('TRIAL_RESULT %d ' % pylink.TRIAL_OK)
 
-      # send a 'TRIAL_RESULT' message to mark the end of trial, see Data
-      # Viewer User Manual, "Protocol for EyeLink Data to Viewer Integration"
-      self.el_tracker.sendMessage('TRIAL_RESULT %d' % pylink.TRIAL_OK)
-      
-      #trial_done = True
-
-  def _run_block(self, block, targets, global_timer):
+  def _run_block(self, block, global_timer,practice=False):
+    #create mouse and cursor
     mouse = ds.create_mouse(win=self.win)
     cursor = ds.create_cursor(win=self.win)
-    targets = ds.create_targets_random(self.win,pm.TRIALS_PER_BLOCK[block],pm.TARGET_WIDTH_PER_BLOCK[block])
+
+    # choose practice or trial parameters
+    if not practice:
+      n_trials = pm.TRIALS_PER_BLOCK[block]
+      target_width = pm.TARGET_WIDTH_PER_BLOCK[block]
+    else: # if practice
+      n_trials = pm.PRACTICE_TRIALS
+      target_width = pm.PRACTICE_TARGET_WIDTH
+
+    # create targets
+    targets = ds.create_targets_random(self.win,n_trials,target_width)
     
-    for trial in range(pm.TRIALS_PER_BLOCK[block]):
+    #run trial
+    for trial in range(n_trials):
       start_point = ds.create_starting_point(self.win)
       chosen_target = ds.choose_target(targets)
       
@@ -336,7 +382,7 @@ class ReachingExperiment:
       # Allocate some time for the tracker to cache some samples
       pylink.pumpDelay(100)
       if trial == 0:
-        self.el_tracker.sendMessage('BLOCK_ID %d' % block)
+        self.el_tracker.sendMessage('BLOCK_ID %d ' % block)
         pylink.pumpDelay(10)
       self._run_trial(block=block, global_timer=global_timer, trial_nr=trial, mouse=mouse, cursor=cursor, start_point=start_point, chosen_target=chosen_target, radius=radius)
   
@@ -352,16 +398,26 @@ class ReachingExperiment:
     self.show_msg(self.win, pm.INSTRUCTION)
     self.calibrate(self.win)
     global_timer = core.Clock()
+    
+    # Practice block
+    practice_msg = f"Let's begin with a Practice Block with " + str(pm.PRACTICE_TRIALS)+ " trials\n Press the Home Button to continue."
+    self.show_msg(self.win, practice_msg)
+    self._run_block(
+    block=-1,
+    global_timer=global_timer,
+    practice=True
+    )
+
+    practice_completed_msg = "Practice trials Completed! We will now begin the experiment\n Press the Home Button to continue."
+    self.show_msg(self.win, practice_completed_msg)
     for block in range(pm.BLOCKS):
-      targets = ds.create_targets_random(self.win, pm.TRIALS_PER_BLOCK[block],pm.TARGET_WIDTH_PER_BLOCK[block])
       block_msg = f"Block {block + 1}\n Press the Home Button to continue."
       self.show_msg(self.win, block_msg)
-      self._run_block(block=block, targets=targets, global_timer=global_timer)
+      self._run_block(block=block, global_timer=global_timer)
     # disconnect, download the EDF file, then terminate the task
     self.terminate_task(win=self.win, edf_file=self.edf_file, session_folder=self.data_dir, session_identifier=self.session_identifier)
 
-    
-    # 5️⃣ Funktion sauber beenden → kein return nötig
+    # 5️ Funktion sauber beenden → kein return nötig
     return
   
   def connect_to_eyelink(self) -> pylink.EyeLink:
@@ -443,13 +499,13 @@ class ReachingExperiment:
   def graph_env(self):
     # Pass the display pixel coordinates (left, top, right, bottom) to the tracker
     # see the EyeLink Installation Guide, "Customizing Screen Settings"
-    el_coords = "screen_pixel_coords = 0 0 %d %d" % (self.scn_width - 1, self.scn_height - 1)
+    el_coords = "screen_pixel_coords = 0 0 %d %d " % (self.scn_width - 1, self.scn_height - 1)
     self.el_tracker.sendCommand(el_coords)
 
     # Write a DISPLAY_COORDS message to the EDF file
     # Data Viewer needs this piece of info for proper visualization, see Data
     # Viewer User Manual, "Protocol for EyeLink Data to Viewer Integration"
-    dv_coords = "DISPLAY_COORDS  0 0 %d %d" % (self.scn_width - 1, self.scn_height - 1)
+    dv_coords = "DISPLAY_COORDS  0 0 %d %d " % (self.scn_width - 1, self.scn_height - 1)
     self.el_tracker.sendMessage(dv_coords)
 
     # Configure a graphics environment (genv) for tracker calibration
