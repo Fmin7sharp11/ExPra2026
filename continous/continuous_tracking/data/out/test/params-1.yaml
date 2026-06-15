@@ -1,0 +1,140 @@
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 2
+num_repetitions_training: 1
+randomization: fullRandom
+randomization_training: sequential
+tracker_type: mouse
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 2
+num_repetitions_training: 1
+randomization: fullRandom
+randomization_training: sequential
+tracker_type: mouse
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 2
+num_repetitions_training: 1
+randomization: fullRandom
+randomization_training: sequential
+tracker_type: mouse
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 2
+num_repetitions_training: 1
+randomization: fullRandom
+randomization_training: sequential
+tracker_type: mouse
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.15
+-   cursor_width: 0.0
+    target_width: 0.3
+-   cursor_width: 0.0
+    target_width: 0.45
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 10
+num_repetitions_training: 2
+randomization: block
+randomization_training: block
+tracker_type: mouse
+trial_duration: 20
+trial_duration_training: 5
+calibration_trials:
+- 0
+conditions:
+-   cursor_width: 0.0
+    target_width: 0.15
+-   cursor_width: 0.0
+    target_width: 0.3
+-   cursor_width: 0.0
+    target_width: 0.45
+-   cursor_width: 0.0
+    target_width: 0.6
+conditions_training:
+-   cursor_width: 0.0
+    target_width: 0.1
+-   cursor_width: 0.0
+    target_width: 0.35
+-   cursor_width: 0.0
+    target_width: 0.6
+monitor_fps: 144
+num_repetitions: 10
+num_repetitions_training: 2
+randomization: block
+randomization_training: block
+tracker_type: dummy
+trial_duration: 20
+trial_duration_training: 5

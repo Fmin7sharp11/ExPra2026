@@ -1,0 +1,32 @@
+monitor_fps: 144
+tracker_type: mouse  # "eyelink" or "mouse"
+
+num_repetitions_training: 2
+trial_duration_training: 5
+randomization_training: block  # "random", "sequential", "block" "or "fullRandom"
+conditions_training:
+  - target_width: 0.1
+    cursor_width: 0.0
+  
+  - target_width: 0.35 
+    cursor_width: 0.0
+  
+  - target_width: 0.6
+    cursor_width: 0.0
+
+num_repetitions: 10
+trial_duration: 20
+randomization: block  # "random", "sequential","block" or "fullRandom"
+calibration_trials: [0]
+conditions:
+  - target_width: 0.15
+    cursor_width: 0.0
+  
+  - target_width: 0.3 
+    cursor_width: 0.0
+  
+  - target_width: 0.45
+    cursor_width: 0.0
+  
+  - target_width: 0.6
+    cursor_width: 0.0

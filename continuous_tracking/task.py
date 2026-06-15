@@ -132,12 +132,12 @@ class TrackingTask:
                 core.quit()
                 
             # 2. Bypass: Weiter, wenn Leertaste gedrückt ODER Kreis geklickt wird
-            if 'space' in keys or self.mouse.isPressedIn(fixation_circle, buttons=[1]):
+            if self.mouse.isPressedIn(fixation_circle, buttons=[0]):
                 break
             # -------------------------------------------------------
 
-            if self.mouse.isPressedIn(fixation_circle, buttons=[1]):
-                break
+            # if self.mouse.isPressedIn(fixation_circle, buttons=[1]):
+            #    break
 
     def show_trial(self) -> None:
         """
@@ -151,23 +151,48 @@ class TrackingTask:
         actual_trial_number = self.trial_number + self.trial_number_offset
         num_frames = round(self.fps * self.trial_duration)
 
-        self.el_tracker.sendMessage(f"TRIAL_START: {actual_trial_number}")
-        if not self.training:
-            self.el_tracker.setOfflineMode()
-            self.el_tracker.startRecording(1, 1, 1, 1)
-            pylink.pumpDelay(100)
+        self.el_tracker.sendMessage(f"TRIAL_START: {actual_trial_number} ")
+        #if not self.training:
+        #    self.el_tracker.setOfflineMode()
+        #    self.el_tracker.startRecording(1, 1, 1, 1)
+        #    pylink.pumpDelay(100)
 
         # Set up the timing
         timer = clock.Clock()
 
-        # Perform one trial
-        for i in range(num_frames):
+# Phasen-Steuerung initialisieren
+        current_state = 0  # Startzustand: Warten auf Button-Click
+        frames_pre_run = round(self.fps * 0.5)  # 500ms in Frames umrechnen
+        pre_run_counter = 0
+        active_tracking_frame = 0
+        # Die Schleife läuft, bis die aktiven Tracking-Frames erreicht sind
+        while active_tracking_frame < num_frames:
             frame_start = timer.getTime()
-
-            # Save current state
-            target_pos = random_walker.pos
-            target_vel = random_walker.vel
             mouse_pos = self.mouse.getPos()
+            # --- ZUSTANDSLOGIK ---
+            if current_state == 0:
+                # Phase 0: Warten auf Klick. Target bewegt sich nicht.
+                target_pos = random_walker.pos
+                target_vel = (0, 0)
+                
+                if self.mouse.getPressed()[0]: # Linksklick startet Phase 1
+                    current_state = 1
+                    
+            elif current_state == 1:
+                # Phase 1: 500ms Vorlaufzeit. Target bewegt sich noch nicht.
+                target_pos = random_walker.pos
+                target_vel = (0, 0)
+                
+                pre_run_counter += 1
+                if pre_run_counter >= frames_pre_run:
+                    current_state = 2  # 500ms vorbei -> Start Tracking!
+                    
+            elif current_state == 2:
+                # Phase 2: Aktives Tracking läuft.
+                target_pos = random_walker.pos
+                target_vel = random_walker.vel
+                active_tracking_frame += 1
+
 #---------------------Eingefügt für Eyetracking
             if self.dummy_mode:
                 gaze_x, gaze_y = mouse_pos[0], mouse_pos[1]
@@ -208,31 +233,46 @@ class TrackingTask:
                     self.training,
                     gaze_x,
                     gaze_y,
-                    trk_time
+                    trk_time,
+                    current_state
                 ]
             )
 
             self.target.pos = target_pos
             self.cursor.pos = mouse_pos
 
-            # Draw order depends on uncertainty condition
-            if self.cursor_width == 0:
-                self.target.draw()
-                self.cursor.draw()
-            else:
-                assert self.target_width == 0
-                self.cursor.draw()
-                self.target.draw()
+            # # Draw order depends on uncertainty condition
+            # if current_state > 0:
+            #     # Wir haben geklicked -> also wird experiment dargestellt
+            #     if self.cursor_width == 0:
+            #         self.target.draw()
+            #         self.cursor.draw()
+            #     else:
+            #         assert self.target_width == 0
+            #         self.cursor.draw()
+            #         self.target.draw()
+
+            # else:
+            #     # Phase 0 -> wir warten auf den click
+            #     self.cursor.draw()
+            if current_state > 0:
+                if self.cursor_width == 0:
+                    self.target.draw()
+                    self.cursor.draw()
+                else:
+                    assert self.target_width == 0
+                    self.cursor.draw()
+                    self.target.draw()
 
             self.window.flip()
-
-            # Make one step (per frame)
-            random_walker.walk()
-
-        if not self.training:
-            self.el_tracker.stopRecording()
             
-        self.el_tracker.sendMessage(f"TRIAL_END: {actual_trial_number}")
+            # --- WALKER NUR IM AKTIVEN TRACKING WEITERBEWEGEN ---
+            if current_state == 2:
+                random_walker.walk()
+        #if not self.training:
+        #    self.el_tracker.stopRecording()
+            
+        self.el_tracker.sendMessage(f"TRIAL_END: {actual_trial_number} ")
 
         # Save data
         self.csv_writer.writerows(self.data)
@@ -262,5 +302,6 @@ class TrackingTask:
                 "gaze_pos_x",
                 "gaze_pos_y",
                 "tracker_time",
+                "state_marker", # Neue eingefügt
             ]
         )
