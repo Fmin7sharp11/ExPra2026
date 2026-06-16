@@ -147,6 +147,7 @@ class ReachingExperiment:
       if not file_exists:
         writer.writerow([
         "trial",
+        "block",
         "time",
         "cursor_x_pix",
         "cursor_y_pix",
@@ -163,6 +164,7 @@ class ReachingExperiment:
         # add row of data
       writer.writerow([
       trial_nr,
+      block,
       global_timer.getTime(),
       mouse_pos[0],
       mouse_pos[1],
