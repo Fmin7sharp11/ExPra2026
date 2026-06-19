@@ -130,7 +130,7 @@ class ReachingExperiment:
 
     return pylink.TRIAL_ERROR
 
-  def _update(self, trial_nr, mouse_pos, target_pos, global_timer, block, gaze_x, gaze_y, state_marker, button_pressed, start_time):
+  def _update(self, trial_nr, block, target_width, mouse_pos, target_pos, global_timer, gaze_x, gaze_y, state_marker, button_pressed, start_time):
     '''
     Create new csv file if needed and add new row of data
     '''
@@ -148,6 +148,7 @@ class ReachingExperiment:
         writer.writerow([
         "trial",
         "block",
+        "target_width",
         "time",
         "cursor_x_pix",
         "cursor_y_pix",
@@ -165,6 +166,7 @@ class ReachingExperiment:
       writer.writerow([
       trial_nr,
       block,
+      target_width,
       global_timer.getTime(),
       mouse_pos[0],
       mouse_pos[1],
@@ -179,7 +181,7 @@ class ReachingExperiment:
       start_time
       ])
 
-  def _run_trial(self, block, global_timer, trial_nr, mouse, cursor, start_point, chosen_target, radius):
+  def _run_trial(self, block, target_width, global_timer, trial_nr, mouse, cursor, start_point, chosen_target, radius):
 
     self.el_tracker.sendCommand('clear_screen 0 ')
     self.el_tracker.sendMessage('TRIAL_ID %d ' % trial_nr)
@@ -261,7 +263,7 @@ class ReachingExperiment:
           state_marker = 3
       # mouse button pressed?
       button_pressed = bool(mouse.getPressed()[0])# is left mouse button pressed
-      self._update(trial_nr, mouse_pos, chosen_target.pos, global_timer, block, gaze_x, gaze_y, state_marker, button_pressed, start_time)
+      self._update(trial_nr, block, target_width, mouse_pos, chosen_target.pos, global_timer, gaze_x, gaze_y, state_marker, button_pressed, start_time)
       
       if state == "start":
         start_point.draw()
@@ -386,7 +388,7 @@ class ReachingExperiment:
       if trial == 0:
         self.el_tracker.sendMessage('BLOCK_ID %d ' % block)
         pylink.pumpDelay(10)
-      self._run_trial(block=block, global_timer=global_timer, trial_nr=trial, mouse=mouse, cursor=cursor, start_point=start_point, chosen_target=chosen_target, radius=radius)
+      self._run_trial(block=block,target_width=target_width, global_timer=global_timer, trial_nr=trial, mouse=mouse, cursor=cursor, start_point=start_point, chosen_target=chosen_target, radius=radius)
   
   def _run_exp(self):
     self.el_tracker = self.connect_to_eyelink()
@@ -412,8 +414,11 @@ class ReachingExperiment:
 
     practice_completed_msg = "Practice trials Completed! We will now begin the experiment\n Press the Home Button to continue."
     self.show_msg(self.win, practice_completed_msg)
-    for block in range(pm.BLOCKS):
-      block_msg = f"Block {block + 1}\n Press the Home Button to continue."
+    # shuffle the order of the blocks
+    block_order = list(range(pm.BLOCKS))
+    random.shuffle(block_order)
+    for idx,block in enumerate(block_order):
+      block_msg = f"Block {idx + 1}\n Press the Home Button to continue."
       self.show_msg(self.win, block_msg)
       self._run_block(block=block, global_timer=global_timer)
     # disconnect, download the EDF file, then terminate the task
