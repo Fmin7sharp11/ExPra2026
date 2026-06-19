@@ -67,13 +67,14 @@ def run_experiment(
     train_trial_duration = params["trial_duration_training"]
 
     if train_method == "block":
-        train_indices = np.repeat(np.arange(len(train_conds)), train_reps)
-        blocked_training_conds = [train_conds[i] for i in train_indices]
+        # Build blocks of identical conditions and randomize their order.
+        train_order = np.random.permutation(len(train_conds))
+        blocked_training_conds = [train_conds[i] for i in train_order for _ in range(train_reps)]
     
         trial_handler_training = data.TrialHandler2(
             trialList=blocked_training_conds,
             nReps=1,
-            method="sequential",  # Strict sequential order for blocks
+            method="sequential",  # Strict sequential order within randomized blocks
         )
     else:
         trial_handler_training = data.TrialHandler2(
@@ -89,13 +90,14 @@ def run_experiment(
     exp_trial_duration = params["trial_duration"]
 
     if exp_method == "block":
-        exp_indices = np.repeat(np.arange(len(exp_conds)), exp_reps)
-        blocked_exp_conds = [exp_conds[i] for i in exp_indices]
+        # Build blocks of identical conditions and randomize their order.
+        exp_order = np.random.permutation(len(exp_conds))
+        blocked_exp_conds = [exp_conds[i] for i in exp_order for _ in range(exp_reps)]
     
         trial_handler = data.TrialHandler2(
             trialList=blocked_exp_conds,
             nReps=1,
-            method="sequential",  # Strict sequential order for blocks
+            method="sequential",  # Strict sequential order within randomized blocks
         )
     else:
         trial_handler = data.TrialHandler2(
